@@ -5,15 +5,18 @@ on:
     branches: [ main, master ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Scarica il codice
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Configura JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: '17'
           distribution: 'temurin'
@@ -59,9 +62,20 @@ jobs:
         run: |
           cd "$PROGETTO"
           gradle assembleRelease --no-daemon
+          cp app/build/outputs/apk/release/app-release.apk "$GITHUB_WORKSPACE/Foto-S25.apk"
 
       - name: Carica APK pronto
         uses: actions/upload-artifact@v4
         with:
           name: Foto-S25-release
-          path: ${{ env.PROGETTO }}/app/build/outputs/apk/release/app-release.apk
+          path: Foto-S25.apk
+
+      # Pubblica l'APK nella sezione "Releases" del repository:
+      # da lì si scarica direttamente il file .apk, senza zip
+      - name: Pubblica APK in Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.run_number }}
+          name: Foto S25 - versione ${{ github.run_number }}
+          files: Foto-S25.apk
+          make_latest: true
