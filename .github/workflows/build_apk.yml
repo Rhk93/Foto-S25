@@ -23,11 +23,45 @@ jobs:
         with:
           gradle-version: '8.7'
 
+      # GitHub non apre gli zip: se nel repository c'è uno zip
+      # con il progetto, lo estrae qui prima di compilare
+      - name: Estrai lo zip del progetto
+        run: |
+          shopt -s nullglob
+          for Z in *.zip; do
+            echo "Estraggo $Z"
+            unzip -o -q "$Z" -d estratto
+          done
+
+      # Trova da solo la cartella del progetto, anche se i file
+      # sono dentro una sottocartella (es. Foto-s25/)
+      - name: Trova il progetto
+        run: |
+          echo "Contenuto del repository:"
+          find . -path ./.git -prune -o -type f -print | sort
+          # Prima cerca nello zip estratto (versione corretta), poi nel resto
+          SETTINGS=""
+          if [ -d estratto ]; then
+            SETTINGS=$(find estratto -name 'settings.gradle*' | head -n 1)
+          fi
+          if [ -z "$SETTINGS" ]; then
+            SETTINGS=$(find . -path ./.git -prune -o -name 'settings.gradle*' -print | head -n 1)
+          fi
+          if [ -z "$SETTINGS" ]; then
+            echo "ERRORE: settings.gradle.kts non trovato nel repository"
+            exit 1
+          fi
+          DIR=$(dirname "$SETTINGS")
+          echo "Progetto trovato in: $DIR"
+          echo "PROGETTO=$DIR" >> "$GITHUB_ENV"
+
       - name: Compila APK
-        run: gradle assembleDebug --no-daemon --stacktrace
+        run: |
+          cd "$PROGETTO"
+          gradle assembleDebug --no-daemon
 
       - name: Carica APK pronto
         uses: actions/upload-artifact@v4
         with:
           name: Foto-S25-APK
-          path: app/build/outputs/apk/debug/app-debug.apk
+          path: ${{ env.PROGETTO }}/app/build/outputs/apk/debug/app-debug.apk
