@@ -24,7 +24,7 @@ jobs:
           gradle-version: '8.7'
 
       - name: Compila APK Debug
-        run: gradle assembleDebug
+        run: gradle assembleDebug --stacktrace --info
 
       - name: Carica APK pronto
         uses: actions/upload-artifact@v4
