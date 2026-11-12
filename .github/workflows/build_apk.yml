@@ -55,13 +55,13 @@ jobs:
           echo "Progetto trovato in: $DIR"
           echo "PROGETTO=$DIR" >> "$GITHUB_ENV"
 
-      - name: Compila APK
+      - name: Compila APK release
         run: |
           cd "$PROGETTO"
-          gradle assembleDebug --no-daemon
+          gradle assembleRelease --no-daemon
 
       - name: Carica APK pronto
         uses: actions/upload-artifact@v4
         with:
-          name: Foto-S25-APK
-          path: ${{ env.PROGETTO }}/app/build/outputs/apk/debug/app-debug.apk
+          name: Foto-S25-release
+          path: ${{ env.PROGETTO }}/app/build/outputs/apk/release/app-release.apk
